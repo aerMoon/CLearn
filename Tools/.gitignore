@@ -1,7 +1,0 @@
-# Delphi
-__history
-*.local
-*.identcache
-Win32/
-*.o
-*.obj
