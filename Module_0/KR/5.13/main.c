@@ -14,6 +14,25 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "stack.h"
+
+int getline(char *text, int maxlen) {
+
+    int ch, pos = 0;
+    while ((ch = getchar()) != EOF && pos < maxlen) {
+        if (ch == '\n') {
+            break;
+        }
+        text[pos] = ch;
+        ++pos;
+    }
+    text[pos] = 0;
+    if (ch == EOF)
+        return EOF;
+    return --pos;
+}
+
+
 int main(int argc, char *argv[]) {
 
     // Получаем N
@@ -24,10 +43,31 @@ int main(int argc, char *argv[]) {
         printf("Error in argument vector\nuse: tail -n #NUM\n");
     }
 
+    // Выделяем память для строк
+    char *buf = (char*)malloc(BUFSIZ);
+    TStrStack stack;
+    InitStrStack(&stack);
+
+    stack.init(count);
+
     // Читаем строки из стандартного ввода
 
+    while (getline(buf, BUFSIZ) != EOF) {
+        printf("%s", buf);
+        putchar('\n');
+        stack.push(buf);
+    }
+
     // Выводим N строк
+    for (int i = 0; i < stack.count(); i++) {
+        stack.pop(buf);
+        if (buf[0] == '\0')
+            continue;
+        printf("%d => %s", i, buf);
+    }
 
-
+    // Смываем за собой
+    free(buf);
+    stack.free();
     return 0;
 }
