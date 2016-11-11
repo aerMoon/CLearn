@@ -53,17 +53,15 @@ int main(int argc, char *argv[]) {
     // Читаем строки из стандартного ввода
 
     while (getline(buf, BUFSIZ) != EOF) {
-        printf("%s", buf);
-        putchar('\n');
         stack.push(buf);
     }
 
     // Выводим N строк
-    for (int i = 0; i < stack.count(); i++) {
+    for (int i = 0; i <= stack.count(); i++) {
         stack.pop(buf);
         if (buf[0] == '\0')
             continue;
-        printf("%d => %s", i, buf);
+        printf("%d => %s\n", i + 1, buf);
     }
 
     // Смываем за собой

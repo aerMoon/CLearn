@@ -24,34 +24,31 @@ static void stack_free() {
 // Финализация стека
 
     for (int i = 0; i < stack_cnt; i++) {
-        free((void*) strings[i]);
+        free(strings[i]);
     }
 }
 
 static int stack_push(char *str) {
 
-    if (stack_pos == stack_cnt) {
+    if (stack_pos < 0 || stack_pos == stack_cnt) {
         stack_pos = 0;
     }
-    strcpy(str, strings[stack_pos]);
-    *strings[stack_pos] = '\0';
-    ++stack_pos;
+    strcpy(strings[stack_pos++], str);
     return stack_pos;
 }
 
 static int stack_pop(char *str) {
 
-    if (stack_pos == 0) {
+    if (stack_pos < 0) {
         return 0;
     }
-    strcpy(strings[stack_pos], str);
-    --stack_pos;
+    strcpy(str, strings[--stack_pos]);
     return stack_pos;
 }
 
 static int stack_count(void) {
 
-    return stack_pos;
+    return stack_pos + 1;
 }
 
 
