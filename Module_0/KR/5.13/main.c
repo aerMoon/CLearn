@@ -57,8 +57,8 @@ int main(int argc, char *argv[]) {
     }
 
     // Выводим N строк
-    for (int i = 0; i <= stack.count(); i++) {
-        stack.pop(buf);
+    for (int i = 0; i < stack.count(); i++) {
+        stack.take(i, buf);
         if (buf[0] == '\0')
             continue;
         printf("%d => %s\n", i + 1, buf);

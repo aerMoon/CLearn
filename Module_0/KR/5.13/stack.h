@@ -12,7 +12,7 @@ static int stack_pos = 0;
 static void stack_init(int count) {
 // Инициализация стека
 
-    strings = (char**)malloc(sizeof(void) * count);
+    strings = (char**)malloc(sizeof(void*) * count);
     for (int i = 0; i < count; i++) {
         strings[i] = (char*)malloc(BUFSIZ);
         *strings[i] = '\0';
@@ -28,27 +28,41 @@ static void stack_free() {
     }
 }
 
+static void shift_left() {
+// Сдвигаем влево
+
+    if (stack_cnt < 2)
+        return ;
+    int i;
+    for (i = 0; i < stack_cnt - 1; i++) {
+        strcpy(strings[i], strings[i + 1]);
+    }
+    *strings[i] = '\0';
+}
+
 static int stack_push(char *str) {
 
-    if (stack_pos < 0 || stack_pos == stack_cnt) {
+    if (stack_pos < 0) {
         stack_pos = 0;
     }
-    strcpy(strings[stack_pos++], str);
+    if (stack_pos == stack_cnt) {
+        shift_left();
+        strcpy(strings[stack_cnt - 1], str);
+    } else {
+        strcpy(strings[stack_pos++], str);
+    }
     return stack_pos;
 }
 
-static int stack_pop(char *str) {
+static int stack_take(int index, char *str) {
 
-    if (stack_pos < 0) {
-        return 0;
-    }
-    strcpy(str, strings[--stack_pos]);
-    return stack_pos;
+    strcpy(str, strings[index]);
+    return index;
 }
 
 static int stack_count(void) {
 
-    return stack_pos + 1;
+    return stack_cnt;
 }
 
 
@@ -59,7 +73,7 @@ typedef struct {
     void (*free)(void);
 
     int (*push)(char *str);
-    int (*pop)(char *str);
+    int (*take)(int index, char *str);
     int (*count)(void);
 } TStrStack;
 
@@ -70,7 +84,7 @@ void InitStrStack(TStrStack *stack) {
     stack->free = &stack_free;
 
     stack->push = &stack_push;
-    stack->pop = &stack_pop;
+    stack->take = &stack_take;
     stack->count = &stack_count;
 }
 
