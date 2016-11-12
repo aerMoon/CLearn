@@ -26,6 +26,7 @@ static void stack_free() {
     for (int i = 0; i < stack_cnt; i++) {
         free(strings[i]);
     }
+    free(strings);
 }
 
 static void shift_left() {
@@ -41,6 +42,7 @@ static void shift_left() {
 }
 
 static int stack_push(char *str) {
+// Положить элемент в стек
 
     if (stack_pos < 0) {
         stack_pos = 0;
@@ -55,23 +57,23 @@ static int stack_push(char *str) {
 }
 
 static int stack_take(int index, char *str) {
+// Взять элемент из стека по индексу
 
     strcpy(str, strings[index]);
     return index;
 }
 
 static int stack_count(void) {
+// Количество элементов в стеке
 
     return stack_cnt;
 }
-
 
 typedef struct {
 // Закос под объекты
 
     void (*init)(int count);
     void (*free)(void);
-
     int (*push)(char *str);
     int (*take)(int index, char *str);
     int (*count)(void);
@@ -82,7 +84,6 @@ void InitStrStack(TStrStack *stack) {
 
     stack->init = &stack_init;
     stack->free = &stack_free;
-
     stack->push = &stack_push;
     stack->take = &stack_take;
     stack->count = &stack_count;

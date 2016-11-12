@@ -17,6 +17,7 @@
 #include "stack.h"
 
 int getline(char *text, int maxlen) {
+// Чтение строки из стандартного потока ввода
 
     int ch, pos = 0;
     while ((ch = getchar()) != EOF && pos < maxlen) {
@@ -32,7 +33,6 @@ int getline(char *text, int maxlen) {
     return --pos;
 }
 
-
 int main(int argc, char *argv[]) {
 
     // Получаем N
@@ -47,11 +47,9 @@ int main(int argc, char *argv[]) {
     char *buf = (char*)malloc(BUFSIZ);
     TStrStack stack;
     InitStrStack(&stack);
-
     stack.init(count);
 
     // Читаем строки из стандартного ввода
-
     while (getline(buf, BUFSIZ) != EOF) {
         stack.push(buf);
     }
