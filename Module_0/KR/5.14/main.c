@@ -10,7 +10,7 @@
 #include <string.h>
 
 #define MAXLINES 5000 /* максимальное число строк */
-
+int reverse = 0;
 char *lineptr[MAXLINES]; /* указатели на строки */
 
 int readlines(char *lineptr[], int nlines);
@@ -24,8 +24,14 @@ int main(int argc, char *argv[])
 {
     int nlines; /* количество прочитанных строк */
     int numeric = 0; /* 1, если сорт, по числ. знач. */
-    if (argc > 1 && strcmp(argv[1], "-n") == 0)
-        numeric = 1;
+    extern int reverse;
+    for (int i = 0; i < argc; i++) {
+        if (argc > 1 && strcmp(argv[i], "-n") == 0) {
+            numeric = 1;
+        } else if (argc > 1 && strcmp(argv[i], "-r") == 0) {
+            reverse = 1;
+        }
+    }
     if ((nlines = readlines(lineptr, MAXLINES)) >= 0) {
         iqsort((void **) lineptr, 0, nlines-1, (int (*)(void*, void*))(numeric ? inumcmp : istrcmp));
         writelines(lineptr, nlines);
@@ -44,23 +50,32 @@ int igetline(char *, int);
 int readlines(char *lineptr[], int maxlines)
 {
     int len, nlines;
-    char *p, line[MAXLEN];nlines = 0;
+    char *p, line[MAXLEN];
+    nlines = 0;
     while ((len = igetline(line, MAXLEN)) > 0)
-    if (nlines >= maxlines || (p = (char*)malloc(sizeof(char) * len)) == NULL)
-        return -1;
-    else {
-        line[len-1] = '\0'; /* убираем символ \n */
-        strcpy(p, line);
-        lineptr[nlines++] = p;
-    }
+        if (nlines >= maxlines || (p = (char*)malloc(sizeof(char) * len)) == NULL)
+            return -1;
+        else {
+            // ++ Вот так и не осознал как же должна правильно работать igetline, что бы и тут не затирался символ и
+            // выход по EOF работал бы
+            // line[len-1] = '\0'; /* убираем символ \n */
+            strcpy(p, line);
+            lineptr[nlines++] = p;
+        }
     return nlines;
 }
 
 /* writelines: печать строк */
 void writelines(char *lineptr[], int nlines)
 {
-    while (nlines-- > 0)
-        printf( "%s\n", *lineptr++);
+    extern int reverse;
+    if (reverse) {
+        for (int i = 1; i <= nlines; i++)
+            printf("%s\n", lineptr[nlines - i]);
+    } else {
+        while (nlines-- > 0)
+            printf("%s\n", *lineptr++);
+    }
 }
 
 /* iqsort: сортирует v[left]...v[right] по возрастанию */
@@ -122,11 +137,8 @@ int igetline(char *text, int maxlen) {
         if (ch == '\n') {
             break;
         }
-        text[pos] = ch;
-        ++pos;
+        text[pos++] = ch;
     }
-    text[pos] = 0;
-    if (ch == EOF)
-        return EOF;
+    text[pos++] = '\0';
     return --pos;
 }
