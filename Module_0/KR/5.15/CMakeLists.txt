@@ -1,4 +1,4 @@
-project(KR_5.14)
+project(KR_5.15)
 link_libraries(${DEPS_LIBRARIES} -lm)
 add_definitions(-std=c99 -Wall -O0 -gdwarf-2)
 cmake_minimum_required(VERSION 2.8)
