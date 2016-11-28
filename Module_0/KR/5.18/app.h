@@ -5,24 +5,31 @@
 enum {NAME, PARENS, BRACKETS };
 void dcl(void);
 void dlrdcl(void);
-int tokentype; /* С‚РёРї РїРѕСЃР»РµРґРЅРµР№ Р»РµРєСЃРµРјС‹ */
-char token[MAXTOKEN]; /* С‚РµРєСЃС‚ РїРѕСЃР»РµРґРЅРµР№ Р»РµРєСЃРµРјС‹ */
-char name[MAXTOKEN]; /* РёРјСЏ */
-char datatype[MAXTOKEN]; /* С‚РёРї = char, int Рё С‚.Рґ. */
-char out[1000]; /* РІС‹РґР°РІР°РµРјС‹Р№ С‚РµРєСЃС‚ */
+int tokentype; /* тип последней лексемы */
+char token[MAXTOKEN]; /* текст последней лексемы */
+char name[MAXTOKEN]; /* имя */
+char datatype[MAXTOKEN]; /* тип = char, int и т.д. */
+char out[1000]; /* выдаваемый текст */
 
 char buf [BUFSIZ];
 int bufp = 0;
 
-int gettoken(void) /* РІРѕР·РІСЂР°С‰Р°РµС‚ СЃР»РµРґСѓСЋС‰СѓСЋ Р»РµРєСЃРµРјСѓ */
+int getter(void)
 {
     int c, getch(void);
+    while ((c = getch()) == ' ' || c == '\t');
+    return c;
+}
+
+int gettoken(void) /* возвращает следующую лексему */
+{
+    int c;
     void ungetch(int);
     char *p = token;
-    while ((c = getch()) == ' ' || c == '\t')
+    while ((c = getter()) == ' ' || c == '\t')
         ;
     if (c == '(') {
-        if ((c = getch()) == ')') {
+        if ((c = getter()) == ')') {
             strcpy(token, "()");
             return tokentype = PARENS;
         } else {
@@ -30,12 +37,12 @@ int gettoken(void) /* РІРѕР·РІСЂР°С‰Р°РµС‚ СЃР»РµРґСѓСЋС‰СѓСЋ Р»РµРєСЃРµРјСѓ */
             return tokentype = '(';
         }
     } else if (c == '[') {
-        for (*p++ = c; (*p++ = getch()) != ']'; )
+        for (*p++ = c; (*p++ = getter()) != ']'; )
             ;
         *p = '\0' ;
         return tokentype = BRACKETS;
     } else if (isalpha(c)) {
-        for (*p++ = c; isalnum(c = getch());)
+        for (*p++ = c; isalnum(c = getter());)
             *p++ = c;
         *p = '\0';
         ungetch(c);
@@ -44,48 +51,50 @@ int gettoken(void) /* РІРѕР·РІСЂР°С‰Р°РµС‚ СЃР»РµРґСѓСЋС‰СѓСЋ Р»РµРєСЃРµРјСѓ */
         return tokentype = c;
 }
 
-/* dcl: СЂР°Р·Р±РѕСЂ РѕР±СЉСЏРІРёС‚РµР»СЏ */
+/* dcl: разбор объявителя */
 void dcl(void)
 {
     int ns;
-    for (ns = 0; gettoken() == '*'; ) /* РїРѕРґСЃС‡РµС‚ Р·РІРµР·РґРѕС‡РµРє */
+    for (ns = 0; gettoken() == '*'; ) /* подсчет звездочек */
         ns++;
     dlrdcl();
     while (ns-- > 0)
-        strcat(out, " СѓРєР°Р·. РЅР°");
+        strcat(out, " указ. на");
 }
 
-/* dirdcl: СЂР°Р·Р±РѕСЂ СЃРѕР±СЃС‚РІРµРЅРЅРѕ РѕР±СЉСЏРІРёС‚РµР»СЏ */
+/* dirdcl: разбор собственно объявителя */
 void dlrdcl(void)
 {
     int type;
     if (tokentype == '(') { /* ( dcl ) */
         dcl();
         if (tokentype != ')')
-            printf( "РѕС€РёР±РєР°: РїСЂРѕРїСѓС‰РµРЅР° )\n");
-    } else if (tokentype == NAME) /* РёРјСЏ РїРµСЂРµРјРµРЅРЅРѕР№ */
+            printf( "ошибка: пропущена )\n");
+    } else if (tokentype == NAME) /* имя переменной */
         strcpy(name, token);
-    else
-        printf("РѕС€РёР±РєР°: РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ name РёР»Рё (dcl)\n");
+    else {
+        printf("ошибка: должно быть name или (dcl)\n");
+        exit(-1);
+    }
     while ((type = gettoken()) == PARENS || type == BRACKETS)
         if (type == PARENS)
-            strcat(out, " С„СѓРЅРєС†. РІРѕР·РІСЂ.");
+            strcat(out, " функц. возвр.");
         else {
-            strcat(out, " РјР°СЃСЃРёРІ");
+            strcat(out, " массив");
             strcat(out, token);
-            strcat(out, " РёР·");
+            strcat(out, " из");
         }
 }
 
-int getch(void) /* РІР·СЏС‚СЊ (РІРѕР·РјРѕР¶РЅРѕ РІРѕР·РІСЂР°С‰РµРЅРЅС‹Р№) СЃРёРјРІРѕР» */
+int getch(void) /* взять (возможно возвращенный) символ */
 {
     return (bufp > 0) ? buf[--bufp] : getchar();
 }
 
-void ungetch(int c) /* РІРµСЂРЅСѓС‚СЊ СЃРёРјРІРѕР» РЅР° РІРІРѕРґ */
+void ungetch(int c) /* вернуть символ на ввод */
 {
     if (bufp >= BUFSIZ)
-        printf ("ungetch: СЃР»РёС€РєРѕРј РјРЅРѕРіРѕ СЃРёРјРІРѕР»РѕРІ\n");
+        printf ("ungetch: слишком много символов\n");
     else
         buf[bufp++] = c;
 }
