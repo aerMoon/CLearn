@@ -3,6 +3,8 @@
 
 #define MAXTOKEN 100
 enum {NAME, PARENS, BRACKETS };
+int gettoken(void);
+int nexttoken(void);
 void dcl(void);
 void dlrdcl(void);
 int tokentype; /* тип последней лексемы */
@@ -21,11 +23,29 @@ int getter(void)
     return c;
 }
 
+enum {NO, YES};
+int prevtoken = NO;
+
+int nexttoken(void)
+{
+    int type;
+    type = gettoken();
+    prevtoken = YES;
+    return type;
+}
+
+int getch(void);
+
 int gettoken(void) /* возвращает следующую лексему */
 {
     int c;
     void ungetch(int);
+
     char *p = token;
+    if (prevtoken == YES) {
+        prevtoken = NO;
+        return tokentype;
+    }
     while ((c = getter()) == ' ' || c == '\t')
         ;
     if (c == '(') {
