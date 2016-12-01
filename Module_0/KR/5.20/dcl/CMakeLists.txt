@@ -1,0 +1,5 @@
+project(KR_5.20_dcl)
+add_definitions(-std=c11 -Wall -O0 -gdwarf-2)
+cmake_minimum_required(VERSION 2.8)
+aux_source_directory(. SRC_LIST)
+add_executable(dcl ${SRC_LIST} ./../app.h dcl.c)
