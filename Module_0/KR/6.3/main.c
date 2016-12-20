@@ -13,73 +13,78 @@
 #define MAXWORD 100
 #define MAXLINK 5
 
-struct tnode { /* узел дерева */
-    char *word; /* указатель на текст */
-    int count; /* число вхождений */
-    struct tnode *left; /* левый сын */
-    struct tnode *right; /* правый сын */
+struct tnode {           /* узел дерева */
+    char *word;           /* указатель на текст */
+    int nline[MAXLINK];   /* массив номеров строк */
+    int count;            /* индекс в nline[] */
+    struct tnode *left;  /* левый дочерний узел */
+    struct tnode *right; /* правый дочерний узел */
 };
 
-struct tnode *addtree(struct tnode *, char *, int);
-void treeprint(struct tnode *, int level);
+struct tnode *addtree(struct tnode *, char *);
+void treeprint(struct tnode *);
 int getword(char *, int);
-struct tnode *talloc(void);
 
+int num;                  /* Максимальная длина "шумового" слова */
+int lnum = 0;             /* Инициализация счетчика строк */
 
 int main(int argc, char *argv[]) {
 
-    int num;
+    struct tnode *root;
+    char word[MAXWORD];
 
     if (argc == 2)
         num = atoi(argv[1]);
     else if (argc < 2)
-        num = 6;
+        num = 2;
     else {
-        printf("usage: tree <number>\n");
+        printf("usage: linktree <number>\n");
         exit(-1);
     }
 
-    struct tnode *root;
     root = NULL;
-
-    char word[MAXWORD];
-    while(getword(word, MAXWORD) != EOF)
-        // Уберём слова в которых меньше Num символов
-        if (isalpha(word[0]) && (strlen((const char *)&word[0]) >= num))
-            root = addtree(root, word, num);
-
-    treeprint(root, num);
+    while (getword (word, MAXWORD) != EOF)
+        if (isalpha(word[0]) && strlen(word) > num)
+            root = addtree(root, word);
+    treeprint(root);
     return 0;
 }
 
+struct tnode *talloc(void);
+char *mystrdup(char *);
+
 /* addtree: добавляет узел со словом w в р или ниже него */
-struct tnode *addtree(struct tnode *p, char *w, int level)
+struct tnode *addtree(struct tnode *p, char *w)
 {
     int cond;
-    if (p == NULL) { /* слово встречается впервые */
+
+    if (p == NULL) {  /* слово встречается впервые */
         p = talloc(); /* создается новый узел */
         p->word = strdup(w);
+        p->nline[p->count] = lnum;
         p->count = 1;
         p->left = p->right = NULL;
-    } else if ((cond = strncmp(w, p->word, level)) == 0)
-        p->count++; /* это слово уже встречалось */
-    else if (cond < 0) /* меньше корня левого поддерева */
-        p->left = addtree(p->left, w, level);
-    else /* больше корня правого поддерева */
-        p->right = addtree(p->right, w, level);
+    } else if ((cond = strcmp(w, p->word)) == 0) {
+        p->nline[p->count++] = lnum; /* это слово уже встречалось */
+    }
+    else if (cond < 0)        /* меньше корня левого поддерева */
+        p->left = addtree(p->left, w);
+    else                      /* больше корня правого поддерева */
+        p->right = addtree(p->right, w);
     return p;
 }
 
 /* treeprint: упорядоченная печать дерева р */
-void treeprint(struct tnode *p, int level)
+void treeprint(struct tnode *p)
 {
+    int i;
+
     if (p != NULL) {
-        treeprint(p->left, level);
-        printf("%4d ", p->count);
-        for (int i = 0; i < level; i++)
-            putchar(p->word[i]);
-        printf("[*]\n");
-        treeprint(p->right, level);
+        treeprint (p->left);
+        printf("\n%s ", p->word);
+        for (i = 0; i < MAXLINK; i++)
+            printf("%2d ",p->nline[i]);
+        treeprint(p->right);
     }
 }
 
@@ -90,36 +95,48 @@ struct tnode *talloc(void)
 }
 
 /* getword: принимает следующее слово или символ из ввода */
-int getword (char *word, int lim) {
-
-    int c, getch(void);
+int getword (char *word, int lim)
+{
+    int c, t, getch(void);
     void ungetch(int);
     char *w = word;
-    while (isspace(c = getch()));
-        if (c == '"') {
-            // Пропускаем строки
-            while ((c = getch()) != '"' && c != EOF)
-                ;
-        } else if (c == '/') {
-            // Комментарий
-            if ((c = getch()) == '/')
-                while ((c = getch()) != 10 && c != EOF)
-                    ;
-        } else if (c != EOF) {
-            *w++ = c;
-        }
 
-    if (!isalpha(c)) {
-        *w = '\0';
-        return c;
-    }
-    for ( ; --lim > 0; w++)
-        if (!isalnum(*w = getch())) {
-            ungetch(*w);
-            break;
+    while (isspace(c = getch()) && c != '\n');
+    if (c != EOF)
+        *w++ = c;
+    if (isalpha(c) || c == '_') {
+        for ( ; --lim > 0; w++) {
+            if (!isalnum(*w = getch()) && *w != '_') {
+                ungetch(*w);
+                break;
+            }
+            else if (*w == '\n') {
+                lnum++;
+                ungetch(*w);
+                break;
+            }
         }
+    }
+    else if (c == '"') {
+        while ((t = getch()) != c && t != EOF);
+    }
+    else if (c == '/') {
+        if ((t = getch()) == '*') {
+            while ((t = getch()) != EOF )
+                if (t == '*') {
+                    if ((t = getch()) == '/')
+                        break;
+                    else
+                        ungetch(t);
+                }
+        }
+            else
+                ungetch(t);
+    }
+    else if (c == '\n')
+        lnum++;
     *w = '\0';
-    return word[0];
+    return c;
 }
 
 char buf [BUFSIZ];
