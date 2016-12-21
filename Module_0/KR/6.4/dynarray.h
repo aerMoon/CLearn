@@ -1,67 +1,92 @@
 #ifndef DYNARRAY_H
 #define DYNARRAY_H
 
-/*
- * Динамический массив строк
- * ----
- * На данный момент в этом модуле будет реализация только динамического массива СТРОК.
- *
- * ИНИЦИАЛИЗАЦИЯ:
- *      - Выделение памяти на PART_ITEMS элементов
- *
- * ДОБАВЛЕНИЕ НОВОГО ЭЛЕМЕНТА:
- *      - Проверка есть ли ещё память для элемента, если нет, то добавить для PART_ITEMS элементов
- *
- */
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
-#define PART_ITEMS 100
+#define PART_ITEMS 10
+
+typedef struct {
+
+   char *key;
+   int value;
+} TDynamicItem;
 
 // Массив, массивов строк
-static char **strings;
+static TDynamicItem *items_dyn;
 // Количество элементов в массиве
-static int _count = 0;
+static int _cur_count_dyn = 0;
 // Количество элементов которые могут поместиться в памяти, после инициализации
-static int _mem_count = 0;
+static int _mem_count_dyn = 0;
 
-static void _init(void) {
+static int _is_valid_index_dyn(int index) {
+// Проверка корректности индекса элемента
+
+    return (index > -1) && (index < _cur_count_dyn);
+}
+
+static void _init_dyn(void) {
 // Инициализация
 
-    _count = 0;
-    _mem_count = PART_ITEMS;
-    strings = (char**)malloc(sizeof(void*) * PART_ITEMS);
-    for (int i = 0; i < _mem_count; i++) {
-        strings[i] = (char*)malloc(BUFSIZ);
-        *strings[i] = '\0';
+    _cur_count_dyn = 0;
+    _mem_count_dyn = PART_ITEMS;
+    items_dyn = (TDynamicItem*)malloc(_mem_count_dyn * sizeof(TDynamicItem*));
+    if (!items_dyn){
+        perror("malloc");
+        exit(1);
     }
 }
 
-static void _free() {
+static void _free_dyn() {
 // Финализация
 
-    for (int i = 0; i < _count; i++) {
-        free(strings[i]);
+    for (int i = 0; i < _mem_count_dyn; i++) {
+        free(items_dyn[i].key);
     }
-    free(strings);
+    free(items_dyn);
 }
 
-static int _add(char *str) {
+static int _add_dyn(char *key, int value) {
 // Добавить элемент
 
-    if (_mem_count < _count) {
-        strcpy(strings[_count++], str);
-        strings = (char**)realloc(strings, sizeof(void*) * _count + PART_ITEMS);
-    } else {
-        strcpy(strings[_count++], str);
+    if (_mem_count_dyn == _cur_count_dyn) {
+        _mem_count_dyn += PART_ITEMS;
+        int new_size = _mem_count_dyn * sizeof(TDynamicItem*);
+
+        items_dyn = (TDynamicItem*)realloc(items_dyn, new_size);
+        if (!items_dyn){
+            perror("realloc");
+            exit(1);
+        }
     }
-    return _count - 1;
+    items_dyn[_cur_count_dyn].key = strdup(key);
+    items_dyn[_cur_count_dyn++].value = value;
+    return _cur_count_dyn - 1;
 }
 
-static char *_get(int index) {
-    return strings[index];
+static int _count_dyn(void) {
+// Вернуть размер массива
+    return _cur_count_dyn;
+}
+
+static TDynamicItem _get_dyn(int index) {
+// Вернуть элемент массива
+
+    TDynamicItem zero;
+    zero.key = 0;
+    zero.value = -1;
+    if (_is_valid_index_dyn(index))
+        return items_dyn[index];
+    else
+        return zero;
+}
+
+static void _set_dyn(int index, TDynamicItem item) {
+// Вернуть элемент массива
+
+    if (_is_valid_index_dyn(index))
+        items_dyn[index] = item;
 }
 
 typedef struct {
@@ -70,24 +95,27 @@ typedef struct {
     void (*init)(void);
     void (*free)(void);
 
-    // Добавить строку
-    int (*add)(char *str);
-    // Прочитать строку
-    char *(*get)(int index);
-    // Удалить строку
-    int (*del)(int index);
-    // Очистить список
-    void (*clear)(void);
+    // Добавить ключ и значение
+    int (*add)(char *key, int value);
+    // Прочитать элемент
+    TDynamicItem (*get)(int index);
+    // Записать элемент
+    void (*set)(int index, TDynamicItem item);
+    // Размер массива
+    int (*count)(void);
 
-} TStrArray;
+} TDynamicArray;
 
-void NewStrArray(TStrArray *array) {
+void NewDynArray(TDynamicArray *array) {
 // Инициализация типа объекта
 
-    array->init = &_init;
-    array->free = &_free;
-    array->add = &_add;
-    array->get = &_get;
+    array->init = &_init_dyn;
+    array->free = &_free_dyn;
+    array->add = &_add_dyn;
+    array->get = &_get_dyn;
+    array->set = &_set_dyn;
+    array->count = &_count_dyn;
+    array->init();
 }
 
 #endif // DYNARRAY_H

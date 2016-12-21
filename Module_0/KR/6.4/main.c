@@ -12,23 +12,62 @@
 #include <stdlib.h>
 #include "dynarray.h"
 
-TStrArray array;
+TDynamicArray array;
+
+int getline(char outBuf[]);
+void append(char *keyBuf);
 
 int main(void) {
 
-    NewStrArray(&array);
+    // Создаём массив
+    NewDynArray(&array);
 
-    array.init();
-    array.add("hello");
-    array.add("world");
-    array.add("bitch");
-
-    for (int i = 0; i < 3; i++) {
-        printf(array.get(i));
-        putchar('\n');
+    // Читаем текст
+    int len;
+    char inBuf[BUFSIZ];
+    while ((len = getline(inBuf)) != 0) {
+        append(inBuf);
     }
 
+    // Печатаем элементы
+    for (int i = 0; i < array.count(); i++) {
+        TDynamicItem item = array.get(i);
+        printf("%d - %s\n", item.value, item.key);
+    }
+
+    // Уничтожаем массив
     array.free();
 
     return 0;
 }
+
+void append(char *keyBuf) {
+
+    // Ищем элемент
+    int flag = 0;
+    for (int i = 0; i < array.count(); i++) {
+        if (strcmp(array.get(i).key, keyBuf) == 0) {
+            flag = 1;
+            TDynamicItem item = array.get(i);
+            item.value += 1;
+            array.set(i, item);
+        }
+    }
+    if (!flag) {
+        array.add(keyBuf, 1);
+    }
+}
+
+int getline(char outBuf[]) {
+    // Получить строку
+    int ch, pos = 0;
+    while ((ch = getchar()) != EOF) {
+        if ((ch == '\n') || (pos > BUFSIZ))
+            break;
+        outBuf[pos] = ch;
+        ++pos;
+    }
+    outBuf[pos] = '\0';
+    return pos;
+}
+
