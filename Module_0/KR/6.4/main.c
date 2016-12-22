@@ -29,6 +29,15 @@ int main(void) {
         append(inBuf);
     }
 
+    // Соритировка в порядке возрастания - это значит редкие сначала
+    for (int i = 0; i < array.count() - 1; i++) {
+        for (int j = 0; j < array.count() - 1; j++) {
+            if (array.get(j).value > array.get(j + 1).value) {
+                array.swap(j, j + 1);
+            }
+        }
+    }
+
     // Печатаем элементы
     for (int i = 0; i < array.count(); i++) {
         TDynamicItem item = array.get(i);

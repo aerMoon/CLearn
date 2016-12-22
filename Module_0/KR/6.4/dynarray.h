@@ -89,6 +89,17 @@ static void _set_dyn(int index, TDynamicItem item) {
         items_dyn[index] = item;
 }
 
+static void _swap_dyn(int left, int right) {
+
+    if (_is_valid_index_dyn(left) && _is_valid_index_dyn(right)) {
+
+        TDynamicItem item;
+        item = items_dyn[left];
+        items_dyn[left] = items_dyn[right];
+        items_dyn[right] = item;
+    }
+}
+
 typedef struct {
 
     // Конструкторы и деструкторы
@@ -103,6 +114,8 @@ typedef struct {
     void (*set)(int index, TDynamicItem item);
     // Размер массива
     int (*count)(void);
+    // Поменять местами элементы
+    void (*swap)(int left, int right);
 
 } TDynamicArray;
 
@@ -115,6 +128,7 @@ void NewDynArray(TDynamicArray *array) {
     array->get = &_get_dyn;
     array->set = &_set_dyn;
     array->count = &_count_dyn;
+    array->swap = &_swap_dyn;
     array->init();
 }
 
