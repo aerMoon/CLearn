@@ -1,5 +1,5 @@
 project(KR_6.5)
-add_definitions(-std=c11 -Wall -O0 -gdwarf-2)
+add_definitions(-std=c99 -Wall -O0 -gdwarf-2)
 cmake_minimum_required(VERSION 2.8)
 aux_source_directory(. SRC_LIST)
 add_executable(app ${SRC_LIST})

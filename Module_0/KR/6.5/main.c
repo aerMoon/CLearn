@@ -6,6 +6,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <strings.h>
 #include <string.h>
 
 struct nlist { /* элемент таблицы */
@@ -20,10 +21,25 @@ static struct nlist *hashtab[HASHSIZE]; /* таблица указателей *
 struct nlist *lookup(char *);
 unsigned hash(char *s);
 struct nlist *install(char *name, char *defn);
+char undef(char *s);
 
 int main(void) {
 
     // Надо заполнить таблицу и написать undef
+    printf("Вставляем два элемента в таблицу\n");
+    install("first", "test1");
+    install("last", "test2");
+
+    printf("\nНаходим элемент first в таблице\n");
+    printf("%s\n", lookup("first")->defn);
+    printf("Находим элемент last в таблице\n");
+    printf("%s\n", lookup("last")->defn);
+
+    printf("\nУдаляем элемент first в таблице\n");
+    undef("first");
+
+    printf("\nНаходим элемент first в таблице\n");
+    printf("%s\n", lookup("first")->defn);
     return 0;
 }
 
@@ -34,7 +50,7 @@ struct nlist *install(char *name, char *defn)
     unsigned hashval;
     if ((np = lookup(name)) == NULL) { /* не найден */
         np = (struct nlist *) malloc(sizeof(*np));
-    if (np == NULL || (np->name = strdup(name)) == NULL)
+    if ((np == NULL) || ((np->name = strdup(name)) == NULL))
         return NULL;
     hashval = hash(name);
     np->next = hashtab[hashval];
@@ -53,6 +69,22 @@ unsigned hash(char *s)
     for (hashval = 0; *s != '\0'; s++)
         hashval = *s + 31 * hashval;
     return hashval % HASHSIZE;
+}
+
+/* undef: удаление имени и определения из таблицы */
+char undef(char *s)
+{
+    struct nlist *np;
+    for (np = hashtab[hash(s)]; np != NULL; np = np->next)
+        if (strcmp(s, np->name) == 0)
+        {
+            free((void *) np->name);
+            free((void *) np->defn);
+            np->name = 0;
+            np->defn = 0;
+            return 1; /* нашли */
+        }
+    return 0; /* не нашли */
 }
 
 /* lookup: ищет s */
